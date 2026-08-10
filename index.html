@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오늘 뭐 먹지?</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f6f3ed;
+      font-family: Arial, "Pretendard", sans-serif;
+      color: #222;
+    }
+
+    .container {
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-bottom: 50px;
+    }
+
+    #menu {
+      font-size: 56px;
+      font-weight: bold;
+      margin: 40px 0;
+      min-height: 70px;
+      transition: transform 0.2s;
+    }
+
+    button {
+      border: none;
+      background: #222;
+      color: white;
+      font-size: 20px;
+      padding: 18px 34px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #444;
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    .pop {
+      animation: pop 0.35s ease;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.7);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(1.15);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>오늘 뭐 먹지?</h1>
+    <div class="subtitle">고민은 컴퓨터에게 맡기자.</div>
+
+    <div id="menu">🍽️</div>
+
+    <button onclick="pickLunch()">
+      점심 골라줘
+    </button>
+  </div>
+
+  <script>
+    const menus = [
+      "제육볶음",
+      "김치찌개",
+      "돈까스",
+      "냉면",
+      "칼국수",
+      "순두부찌개",
+      "초밥",
+      "라멘",
+      "쌀국수",
+      "햄버거",
+      "파스타",
+      "마라탕",
+      "부대찌개",
+      "비빔밥",
+      "설렁탕"
+    ];
+
+    function pickLunch() {
+      const menu = document.getElementById("menu");
+
+      const randomIndex = Math.floor(
+        Math.random() * menus.length
+      );
+
+      menu.textContent = menus[randomIndex];
+
+      menu.classList.remove("pop");
+
+      void menu.offsetWidth;
+
+      menu.classList.add("pop");
+    }
+  </script>
+
+</body>
+</html>
