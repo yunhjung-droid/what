@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>오늘 뭐 먹지?</title>
+  <title>서영 선생님 그런데</title>
 
   <style>
     * {
@@ -16,32 +16,32 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #f6f3ed;
+      background: #f5f1e8;
       font-family: Arial, "Pretendard", sans-serif;
       color: #222;
     }
 
     .container {
+      width: min(90%, 600px);
       text-align: center;
-      padding: 40px;
+      padding: 40px 24px;
     }
 
     h1 {
       font-size: 42px;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      color: #777;
       margin-bottom: 50px;
+      line-height: 1.3;
     }
 
-    #menu {
-      font-size: 56px;
-      font-weight: bold;
-      margin: 40px 0;
-      min-height: 70px;
-      transition: transform 0.2s;
+    #message {
+      min-height: 110px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 38px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 40px;
     }
 
     button {
@@ -52,35 +52,47 @@
       padding: 18px 34px;
       border-radius: 50px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: 0.2s;
     }
 
     button:hover {
-      background: #444;
       transform: translateY(-2px);
+      background: #444;
     }
 
-    button:active {
-      transform: scale(0.96);
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
     }
 
-    .pop {
-      animation: pop 0.35s ease;
+    .shake {
+      animation: shake 0.15s infinite;
     }
 
-    @keyframes pop {
+    .reveal {
+      animation: reveal 0.7s ease;
+    }
+
+    @keyframes shake {
+      0%   { transform: translateX(-3px); }
+      50%  { transform: translateX(3px); }
+      100% { transform: translateX(-3px); }
+    }
+
+    @keyframes reveal {
       0% {
-        transform: scale(0.7);
         opacity: 0;
+        transform: scale(0.6);
       }
 
-      70% {
+      60% {
+        opacity: 1;
         transform: scale(1.15);
       }
 
       100% {
         transform: scale(1);
-        opacity: 1;
       }
     }
   </style>
@@ -89,49 +101,56 @@
 <body>
 
   <div class="container">
-    <h1>오늘 뭐 먹지?</h1>
-    <div class="subtitle">고민은 컴퓨터에게 맡기자.</div>
 
-    <div id="menu">🍽️</div>
+    <h1>서영 선생님 그런데</h1>
 
-    <button onclick="pickLunch()">
-      점심 골라줘
+    <div id="message">🤔</div>
+
+    <button id="button" onclick="revealMessage()">
+      눌러보세요
     </button>
+
   </div>
 
   <script>
-    const menus = [
-      "제육볶음",
-      "김치찌개",
-      "돈까스",
-      "냉면",
-      "칼국수",
-      "순두부찌개",
-      "초밥",
-      "라멘",
-      "쌀국수",
-      "햄버거",
-      "파스타",
-      "마라탕",
-      "부대찌개",
-      "비빔밥",
-      "설렁탕"
-    ];
+    function revealMessage() {
 
-    function pickLunch() {
-      const menu = document.getElementById("menu");
+      const message = document.getElementById("message");
+      const button = document.getElementById("button");
 
-      const randomIndex = Math.floor(
-        Math.random() * menus.length
-      );
+      button.disabled = true;
+      button.textContent = "잠시만요...";
 
-      menu.textContent = menus[randomIndex];
+      message.classList.add("shake");
 
-      menu.classList.remove("pop");
+      setTimeout(() => {
+        message.textContent = "두구...";
+      }, 300);
 
-      void menu.offsetWidth;
+      setTimeout(() => {
+        message.textContent = "두구... 두구...";
+      }, 900);
 
-      menu.classList.add("pop");
+      setTimeout(() => {
+        message.textContent = "두구두구두구두구...";
+      }, 1600);
+
+      setTimeout(() => {
+        message.textContent = "🥁 두구두구두구두구두구...";
+      }, 2300);
+
+      setTimeout(() => {
+
+        message.classList.remove("shake");
+
+        message.textContent = "집들이는 언제 하실 거예요!? 🏠🎉";
+
+        message.classList.add("reveal");
+
+        button.textContent = "ㅋㅋㅋㅋ";
+        button.disabled = false;
+
+      }, 3200);
     }
   </script>
 
