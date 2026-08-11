@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>도쿄 여행 생성기</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+      background: #f7f4ee;
+      color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: min(92%, 700px);
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 38px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-bottom: 30px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 26px;
+    }
+
+    .option {
+      border: 1px solid #ccc;
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 17px;
+    }
+
+    .option.selected {
+      background: #222;
+      color: white;
+      border-color: #222;
+    }
+
+    .make-button {
+      border: none;
+      background: #222;
+      color: white;
+      font-size: 19px;
+      padding: 17px 30px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    #loading {
+      margin-top: 30px;
+      min-height: 30px;
+      color: #666;
+    }
+
+    #result {
+      margin-top: 30px;
+      text-align: left;
+      display: none;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+
+    .card h2 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>TOKYO TRIP 🇯🇵</h1>
+    <div class="subtitle">이번 여행은 어떻게 놀까요?</div>
+
+    <div class="options">
+
+      <button class="option" data-type="art">
+        🎨 미술관 많이
+      </button>
+
+      <button class="option" data-type="food">
+        🍣 먹는 게 중요
+      </button>
+
+      <button class="option" data-type="cafe">
+        ☕ 카페 많이
+      </button>
+
+      <button class="option" data-type="walk">
+        🚶 많이 걸어도 됨
+      </button>
+
+    </div>
+
+    <button class="make-button" onclick="makeTrip()">
+      여행 일정 만들어줘
+    </button>
+
+    <div id="loading"></div>
+
+    <div id="result"></div>
+
+  </div>
+
+
+<script>
+
+const selected = new Set();
+
+document.querySelectorAll(".option").forEach(button => {
+
+  button.addEventListener("click", () => {
+
+    const type = button.dataset.type;
+
+    if (selected.has(type)) {
+      selected.delete(type);
+      button.classList.remove("selected");
+    } else {
+      selected.add(type);
+      button.classList.add("selected");
+    }
+
+  });
+
+});
+
+
+function makeTrip() {
+
+  const loading = document.getElementById("loading");
+  const result = document.getElementById("result");
+
+  result.style.display = "none";
+  result.innerHTML = "";
+
+  loading.textContent = "취향 분석 중...";
+
+  setTimeout(() => {
+    loading.textContent = "도쿄 동선 계산 중...";
+  }, 800);
+
+  setTimeout(() => {
+    loading.textContent = "친구 사이가 틀어지지 않을 정도로 걷는 중...";
+  }, 1600);
+
+  setTimeout(() => {
+
+    loading.textContent = "";
+
+    let day1 = [];
+    let day2 = [];
+
+    if (selected.has("art")) {
+      day1.push("10:30 미술관");
+      day2.push("14:00 작은 갤러리");
+    }
+
+    if (selected.has("food")) {
+      day1.push("12:30 스시 점심");
+      day2.push("19:00 이자카야");
+    }
+
+    if (selected.has("cafe")) {
+      day1.push("16:00 카페");
+      day2.push("11:00 커피");
+    }
+
+    if (selected.has("walk")) {
+      day1.push("18:00 동네 산책");
+      day2.push("16:30 강변 걷기");
+    }
+
+    if (day1.length === 0) {
+      day1 = [
+        "11:00 동네 산책",
+        "13:00 점심",
+        "15:30 카페",
+        "18:30 저녁"
+      ];
+
+      day2 = [
+        "10:30 천천히 출발",
+        "12:00 쇼핑",
+        "15:00 카페",
+        "19:00 저녁"
+      ];
+    }
+
+    result.innerHTML = `
+      <div class="card">
+        <h2>DAY 1</h2>
+        ${day1.map(item => `<p>${item}</p>`).join("")}
+      </div>
+
+      <div class="card">
+        <h2>DAY 2</h2>
+        ${day2.map(item => `<p>${item}</p>`).join("")}
+      </div>
+    `;
+
+    result.style.display = "block";
+
+  }, 2600);
+
+}
+
+</script>
+
+</body>
+</html>
