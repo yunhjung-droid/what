@@ -221,102 +221,127 @@
   const API_URL =
     "https://script.google.com/macros/s/AKfycbynUgaW0wqY0BLe3BInoXMsItliBWCAYq42abs82ZKhudULG6ZremqKqqPiDIXv3CHB/exec";
 
+  const CACHE_KEY = "saturday-tennis-data";
+  const CACHE_TIME_KEY = "saturday-tennis-time";
 
-  async function loadData() {
 
-    const status = document.getElementById("status");
-    const latest = document.getElementById("latest");
-    const history = document.getElementById("history");
+  // -----------------------------------------
+  // 1. 페이지가 열리면 가장 먼저 실행
+  // -----------------------------------------
 
-    status.textContent = "최신 데이터를 불러오는 중...";
-    latest.innerHTML = "";
-    history.innerHTML = "";
+  start();
+
+
+  function start() {
+
+    const cachedData =
+      localStorage.getItem(CACHE_KEY);
+
+    const cachedTime =
+      localStorage.getItem(CACHE_TIME_KEY);
+
+
+    // 저장된 데이터가 있다면 즉시 보여준다
+    if (cachedData) {
+
+      try {
+
+        const data = JSON.parse(cachedData);
+
+        renderData(data);
+
+        document.getElementById("status").textContent =
+          "저장된 내역 표시 중 · 마지막 업데이트 " +
+          formatUpdateTime(cachedTime);
+
+      }
+
+      catch (error) {
+
+        console.error("캐시 읽기 오류:", error);
+
+      }
+
+    }
+
+
+    // 저장된 데이터 유무와 관계없이
+    // 뒤에서 최신 데이터를 다시 가져온다
+    loadData(false);
+
+  }
+
+
+
+  // -----------------------------------------
+  // 2. Google Apps Script에서 최신 데이터 가져오기
+  // -----------------------------------------
+
+  async function loadData(showLoading = true) {
+
+    const status =
+      document.getElementById("status");
+
+
+    // 사용자가 직접 새로고침 버튼을 눌렀을 때만
+    // 로딩 문구를 보여준다
+    if (showLoading) {
+
+      status.textContent =
+        "최신 데이터를 불러오는 중...";
+
+    }
+
 
     try {
 
-      const response = await fetch(API_URL);
-      const data = await response.json();
+      const response =
+        await fetch(API_URL);
 
-      if (!data.length) {
-        status.textContent = "등록된 모임이 없습니다.";
-        return;
+      if (!response.ok) {
+        throw new Error(
+          "서버 응답 오류: " + response.status
+        );
       }
 
-      const sorted = data
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(b["모임일"]) - new Date(a["모임일"])
-        );
+      const data =
+        await response.json();
 
-      const newest = sorted[0];
-      const past = sorted.slice(1);
+
+      if (!data.length) {
+
+        status.textContent =
+          "등록된 모임이 없습니다.";
+
+        return;
+
+      }
+
+
+      // 최신 데이터 화면에 표시
+      renderData(data);
+
+
+      // 현재 시간을 기록
+      const now =
+        new Date().toISOString();
+
+
+      // 최신 데이터를 브라우저에 저장
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify(data)
+      );
+
+      localStorage.setItem(
+        CACHE_TIME_KEY,
+        now
+      );
+
 
       status.textContent =
-        `총 ${data.length}회의 모임 기록`;
-
-      latest.innerHTML = `
-        <div class="latest-card">
-
-          <div class="latest-label">
-            LATEST MEETING
-          </div>
-
-          <div class="round">
-            ${roundText(newest)}
-          </div>
-
-          <div class="date">
-            ${formatDate(newest["모임일"])}
-          </div>
-
-          ${meetingRows(newest)}
-
-          ${participantSection(newest, "latest")}
-
-          <div class="row reserve">
-            <span class="label">현재 예비비</span>
-            <span class="value">
-              ${money(newest["예비비 누계"])}
-            </span>
-          </div>
-
-        </div>
-      `;
-
-
-      past.forEach((meeting, index) => {
-
-        const item = document.createElement("details");
-
-        item.innerHTML = `
-          <summary>
-            <div class="history-round">
-              ${roundText(meeting)}
-            </div>
-
-            ${formatDate(meeting["모임일"])}
-          </summary>
-
-          <div class="history-content">
-
-            ${meetingRows(meeting)}
-
-            ${participantSection(meeting, "past" + index)}
-
-            <div class="row reserve">
-              <span class="label">예비비 누계</span>
-              <span class="value">
-                ${money(meeting["예비비 누계"])}
-              </span>
-            </div>
-
-          </div>
-        `;
-
-        history.appendChild(item);
-
-      });
+        "최신 내역 · " +
+        formatUpdateTime(now);
 
     }
 
@@ -324,93 +349,294 @@
 
       console.error(error);
 
-      status.textContent =
-        "데이터를 불러오지 못했습니다.";
+
+      // 이미 캐시가 화면에 표시되어 있다면
+      // 오류가 나더라도 기존 화면은 유지
+      const cachedData =
+        localStorage.getItem(CACHE_KEY);
+
+      if (cachedData) {
+
+        const cachedTime =
+          localStorage.getItem(CACHE_TIME_KEY);
+
+        status.textContent =
+          "저장된 내역 표시 중 · 마지막 업데이트 " +
+          formatUpdateTime(cachedTime);
+
+      }
+
+      else {
+
+        status.textContent =
+          "데이터를 불러오지 못했습니다.";
+
+      }
 
     }
 
   }
 
 
+
+  // -----------------------------------------
+  // 3. 받은 데이터를 실제 화면에 그리기
+  // -----------------------------------------
+
+  function renderData(data) {
+
+    const latest =
+      document.getElementById("latest");
+
+    const history =
+      document.getElementById("history");
+
+
+    latest.innerHTML = "";
+    history.innerHTML = "";
+
+
+    const sorted =
+      data
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b["모임일"]) -
+            new Date(a["모임일"])
+        );
+
+
+    const newest =
+      sorted[0];
+
+    const past =
+      sorted.slice(1);
+
+
+    // 최신 모임
+    latest.innerHTML = `
+      <div class="latest-card">
+
+        <div class="latest-label">
+          LATEST MEETING
+        </div>
+
+        <div class="round">
+          ${roundText(newest)}
+        </div>
+
+        <div class="date">
+          ${formatDate(newest["모임일"])}
+        </div>
+
+        ${meetingRows(newest)}
+
+        ${participantSection(newest, "latest")}
+
+        <div class="row reserve">
+          <span class="label">
+            현재 예비비
+          </span>
+
+          <span class="value">
+            ${money(newest["예비비 누계"])}
+          </span>
+        </div>
+
+      </div>
+    `;
+
+
+    // 지난 모임
+    past.forEach((meeting, index) => {
+
+      const item =
+        document.createElement("details");
+
+
+      item.innerHTML = `
+        <summary>
+
+          <div class="history-round">
+            ${roundText(meeting)}
+          </div>
+
+          ${formatDate(meeting["모임일"])}
+
+        </summary>
+
+
+        <div class="history-content">
+
+          ${meetingRows(meeting)}
+
+          ${participantSection(
+            meeting,
+            "past" + index
+          )}
+
+          <div class="row reserve">
+
+            <span class="label">
+              예비비 누계
+            </span>
+
+            <span class="value">
+              ${money(
+                meeting["예비비 누계"]
+              )}
+            </span>
+
+          </div>
+
+        </div>
+      `;
+
+
+      history.appendChild(item);
+
+    });
+
+  }
+
+
+
+  // -----------------------------------------
+  // 4. 모임의 회계 정보
+  // -----------------------------------------
+
   function meetingRows(meeting) {
 
     return `
       <div class="row">
-        <span class="label">참석인원</span>
+        <span class="label">
+          참석인원
+        </span>
+
         <span class="value">
           ${meeting["참석인원"]}명
         </span>
       </div>
 
+
       <div class="row">
-        <span class="label">코트수</span>
+        <span class="label">
+          코트수
+        </span>
+
         <span class="value">
           ${meeting["코트수"]}면
         </span>
       </div>
 
+
       <div class="divider"></div>
 
+
       <div class="row">
-        <span class="label">코트비</span>
+        <span class="label">
+          코트비
+        </span>
+
         <span class="value">
           ${money(meeting["코트비"])}
         </span>
       </div>
 
+
       <div class="row">
-        <span class="label">공비</span>
+        <span class="label">
+          공비
+        </span>
+
         <span class="value">
           ${money(meeting["공비"])}
         </span>
       </div>
 
+
       ${
         Number(meeting["기타비용"]) !== 0
           ? `
             <div class="row">
+
               <span class="label">
                 기타비용
                 ${
                   meeting["기타내용"]
-                    ? ` · ${meeting["기타내용"]}`
+                    ? " · " +
+                      meeting["기타내용"]
                     : ""
                 }
               </span>
 
               <span class="value">
-                ${money(meeting["기타비용"])}
+                ${money(
+                  meeting["기타비용"]
+                )}
               </span>
+
             </div>
           `
           : ""
       }
 
+
       <div class="divider"></div>
 
+
       <div class="row total-row">
-        <span class="label">총 정산액</span>
-        <span class="value">
-          ${money(meeting["정산목표액"])}
+
+        <span class="label">
+          총 정산액
         </span>
+
+        <span class="value">
+          ${money(
+            meeting["정산목표액"]
+          )}
+        </span>
+
       </div>
 
-      <div class="row">
-        <span class="label">1인당 금액</span>
-        <span class="value">
-          ${money(meeting["이론상 1인당"])}
-        </span>
-      </div>
 
       <div class="row">
-        <span class="label">이번 회차 예비비</span>
-        <span class="value">
-          ${signedMoney(meeting["실제 예비비 증감"])}
+
+        <span class="label">
+          1인당 금액
         </span>
+
+        <span class="value">
+          ${money(
+            meeting["이론상 1인당"]
+          )}
+        </span>
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          이번 회차 예비비
+        </span>
+
+        <span class="value">
+          ${signedMoney(
+            meeting["실제 예비비 증감"]
+          )}
+        </span>
+
       </div>
     `;
+
   }
 
+
+
+  // -----------------------------------------
+  // 5. 참가자 보기
+  // -----------------------------------------
 
   function participantSection(meeting, id) {
 
@@ -419,9 +645,11 @@
         ? meeting["참가자"]
         : [];
 
+
     if (participants.length === 0) {
       return "";
     }
+
 
     return `
       <button
@@ -431,18 +659,23 @@
         참가자 보기
       </button>
 
+
       <div
         class="participants"
         id="participants-${id}"
       >
+
         <div class="participants-title">
           참가자
         </div>
 
         ${participants.join(" · ")}
+
       </div>
     `;
+
   }
+
 
 
   function toggleParticipants(id, button) {
@@ -452,8 +685,10 @@
         "participants-" + id
       );
 
+
     const isOpen =
       box.classList.contains("show");
+
 
     if (isOpen) {
 
@@ -462,7 +697,9 @@
       button.textContent =
         "참가자 보기";
 
-    } else {
+    }
+
+    else {
 
       box.classList.add("show");
 
@@ -474,25 +711,43 @@
   }
 
 
+
+  // -----------------------------------------
+  // 6. 회차
+  // -----------------------------------------
+
   function roundText(meeting) {
 
-    const round = meeting["회차"];
+    const round =
+      meeting["회차"];
+
 
     if (
       round === "" ||
       round === null ||
       round === undefined
     ) {
+
       return "회차 미기록";
+
     }
 
+
     return `${round}회차`;
+
   }
 
 
+
+  // -----------------------------------------
+  // 7. 모임 날짜
+  // -----------------------------------------
+
   function formatDate(value) {
 
-    const date = new Date(value);
+    const date =
+      new Date(value);
+
 
     return new Intl.DateTimeFormat(
       "ko-KR",
@@ -508,6 +763,41 @@
   }
 
 
+
+  // -----------------------------------------
+  // 8. 마지막 업데이트 시간
+  // -----------------------------------------
+
+  function formatUpdateTime(value) {
+
+    if (!value) {
+      return "확인 불가";
+    }
+
+
+    const date =
+      new Date(value);
+
+
+    return new Intl.DateTimeFormat(
+      "ko-KR",
+      {
+        timeZone: "Asia/Seoul",
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    ).format(date);
+
+  }
+
+
+
+  // -----------------------------------------
+  // 9. 금액 표시
+  // -----------------------------------------
+
   function money(value) {
 
     if (
@@ -515,13 +805,18 @@
       value === null ||
       value === undefined
     ) {
+
       return "-";
+
     }
 
-    return Math.round(Number(value))
-      .toLocaleString("ko-KR") + "원";
+
+    return Math.round(
+      Number(value)
+    ).toLocaleString("ko-KR") + "원";
 
   }
+
 
 
   function signedMoney(value) {
@@ -531,24 +826,32 @@
       value === null ||
       value === undefined
     ) {
+
       return "-";
+
     }
 
+
     const number =
-      Math.round(Number(value));
+      Math.round(
+        Number(value)
+      );
+
 
     if (number > 0) {
+
       return "+" +
         number.toLocaleString("ko-KR") +
         "원";
+
     }
 
-    return number.toLocaleString("ko-KR") + "원";
+
+    return number
+      .toLocaleString("ko-KR") +
+      "원";
 
   }
-
-
-  loadData();
 
 </script>
 
