@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>토요일의 테니스</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      background: #f5f3ee;
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+      color: #222;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+    }
+
+    .date {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 18px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+
+    .label {
+      color: #777;
+    }
+
+    .value {
+      font-weight: 600;
+    }
+
+    #status {
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    button {
+      border: none;
+      background: #222;
+      color: white;
+      padding: 13px 20px;
+      border-radius: 999px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>🎾 토요일의 테니스</h1>
+
+    <div class="subtitle">
+      주간 모임 회계 현황
+    </div>
+
+    <button onclick="loadData()">
+      ↻ 최신 내역 불러오기
+    </button>
+
+    <div id="status">
+      데이터를 불러오는 중...
+    </div>
+
+    <div id="meetings"></div>
+
+  </div>
+
+
+<script>
+
+  // ↓↓↓ 여기에 아까 만든 Apps Script 웹 앱 주소를 넣어줘
+  const API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQEup-CgKJeZH1Jml_v2Yr2rb6nthSzeXPV3YtPYzNMfT9pIEalygnDD9Yp360l8yioTsNbE7vMk5LFcQh2pdx0VljNsRelqoFVXsXUKb58pcQh4JH5SHlehB8R0dy0iayxg8iumxlwd_wTa4WtIKL5X0YV4oF3EhfarI0BP9j3Hcf1NV-rmswB42IJMKN90dVo0b4V20Ot9PiHrDm93u2XCvh7zZbf_dwptE2qA_Vn3RuIXtPyEl1mUugntanswZw9A_KzAasFMlofnEhFgx74278a3w&lib=Mp9NdL1lJdK64LZN_Alt2ER7pH5Zr0K0N";
+
+
+  async function loadData() {
+
+    const status =
+      document.getElementById("status");
+
+    const meetings =
+      document.getElementById("meetings");
+
+
+    status.textContent =
+      "최신 데이터를 불러오는 중...";
+
+    meetings.innerHTML = "";
+
+
+    try {
+
+      const response =
+        await fetch(API_URL);
+
+      const data =
+        await response.json();
+
+
+      status.textContent =
+        `총 ${data.length}회의 모임 기록을 불러왔습니다.`;
+
+
+      data
+        .slice()
+        .reverse()
+        .forEach(meeting => {
+
+          const card =
+            document.createElement("div");
+
+          card.className = "card";
+
+
+          card.innerHTML = `
+
+            <div class="date">
+              ${meeting["모임일"]}
+            </div>
+
+            <div class="row">
+              <span class="label">참석인원</span>
+              <span class="value">
+                ${meeting["참석인원"]}명
+              </span>
+            </div>
+
+            <div class="row">
+              <span class="label">코트수</span>
+              <span class="value">
+                ${meeting["코트수"]}면
+              </span>
+            </div>
+
+            <div class="row">
+              <span class="label">코트비</span>
+              <span class="value">
+                ${money(meeting["코트비"])}
+              </span>
+            </div>
+
+            <div class="row">
+              <span class="label">공비</span>
+              <span class="value">
+                ${money(meeting["공비"])}
+              </span>
+            </div>
+
+            <div class="row">
+              <span class="label">1인당 금액</span>
+              <span class="value">
+                ${money(meeting["이론상 1인당"])}
+              </span>
+            </div>
+
+            <div class="row">
+              <span class="label">현재 예비비</span>
+              <span class="value">
+                ${money(meeting["예비비 누계"])}
+              </span>
+            </div>
+
+          `;
+
+
+          meetings.appendChild(card);
+
+        });
+
+
+    }
+
+    catch (error) {
+
+      console.error(error);
+
+      status.textContent =
+        "데이터를 불러오지 못했습니다.";
+
+    }
+
+  }
+
+
+  function money(value) {
+
+    if (
+      value === "" ||
+      value === null ||
+      value === undefined
+    ) {
+      return "-";
+    }
+
+    return Math.round(Number(value))
+      .toLocaleString("ko-KR") + "원";
+
+  }
+
+
+  // 페이지를 열자마자 자동으로 데이터 불러오기
+  loadData();
+
+</script>
+
+</body>
+</html>
