@@ -7,11 +7,20 @@
   <title>토요일의 테니스</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 32px 18px;
+      padding: 32px 18px 60px;
       background: #f5f3ee;
-      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Pretendard",
+        "Apple SD Gothic Neo",
+        sans-serif;
       color: #222;
     }
 
@@ -27,7 +36,7 @@
 
     .subtitle {
       color: #777;
-      margin-bottom: 28px;
+      margin-bottom: 26px;
     }
 
     .refresh-button {
@@ -38,33 +47,44 @@
       border-radius: 999px;
       font-size: 14px;
       cursor: pointer;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     #status {
-      color: #888;
-      font-size: 14px;
+      color: #999;
+      font-size: 13px;
       margin-bottom: 18px;
     }
 
     .latest-card {
       background: white;
-      border-radius: 24px;
+      border-radius: 26px;
       padding: 28px;
       box-shadow: 0 10px 36px rgba(0,0,0,0.07);
-      margin-bottom: 32px;
+      margin-bottom: 36px;
     }
 
     .latest-label {
-      font-size: 13px;
-      color: #999;
-      margin-bottom: 8px;
-      letter-spacing: 0.05em;
+      font-size: 12px;
+      color: #aaa;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .round {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 700;
+      background: #f1efe9;
+      padding: 7px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
     }
 
     .date {
       font-size: 28px;
       font-weight: 800;
+      line-height: 1.3;
       margin-bottom: 24px;
     }
 
@@ -84,6 +104,17 @@
       text-align: right;
     }
 
+    .divider {
+      border-top: 1px solid #eee;
+      margin: 20px 0;
+    }
+
+    .total-row .label,
+    .total-row .value {
+      font-weight: 800;
+      color: #222;
+    }
+
     .reserve {
       margin-top: 22px;
       padding-top: 20px;
@@ -92,6 +123,38 @@
 
     .reserve .value {
       font-size: 22px;
+    }
+
+    .participants-button {
+      margin-top: 22px;
+      border: 1px solid #ddd;
+      background: white;
+      color: #333;
+      padding: 10px 15px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .participants {
+      display: none;
+      margin-top: 14px;
+      padding: 16px;
+      background: #f8f7f3;
+      border-radius: 14px;
+      line-height: 1.7;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .participants.show {
+      display: block;
+    }
+
+    .participants-title {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 6px;
     }
 
     h2 {
@@ -119,7 +182,13 @@
     }
 
     .history-content {
-      padding: 0 20px 20px;
+      padding: 0 20px 22px;
+    }
+
+    .history-round {
+      color: #999;
+      font-size: 13px;
+      margin-bottom: 4px;
     }
   </style>
 </head>
@@ -135,7 +204,9 @@
       ↻ 최신 내역 불러오기
     </button>
 
-    <div id="status">데이터를 불러오는 중...</div>
+    <div id="status">
+      데이터를 불러오는 중...
+    </div>
 
     <div id="latest"></div>
 
@@ -191,11 +262,17 @@
             LATEST MEETING
           </div>
 
+          <div class="round">
+            ${roundText(newest)}
+          </div>
+
           <div class="date">
             ${formatDate(newest["모임일"])}
           </div>
 
           ${meetingRows(newest)}
+
+          ${participantSection(newest, "latest")}
 
           <div class="row reserve">
             <span class="label">현재 예비비</span>
@@ -208,18 +285,24 @@
       `;
 
 
-      past.forEach(meeting => {
+      past.forEach((meeting, index) => {
 
         const item = document.createElement("details");
 
         item.innerHTML = `
           <summary>
+            <div class="history-round">
+              ${roundText(meeting)}
+            </div>
+
             ${formatDate(meeting["모임일"])}
           </summary>
 
           <div class="history-content">
 
             ${meetingRows(meeting)}
+
+            ${participantSection(meeting, "past" + index)}
 
             <div class="row reserve">
               <span class="label">예비비 누계</span>
@@ -266,6 +349,8 @@
         </span>
       </div>
 
+      <div class="divider"></div>
+
       <div class="row">
         <span class="label">코트비</span>
         <span class="value">
@@ -280,22 +365,31 @@
         </span>
       </div>
 
-      <div class="row">
-        <span class="label">기타비용</span>
-        <span class="value">
-          ${money(meeting["기타비용"])}
-        </span>
-      </div>
+      ${
+        Number(meeting["기타비용"]) !== 0
+          ? `
+            <div class="row">
+              <span class="label">
+                기타비용
+                ${
+                  meeting["기타내용"]
+                    ? ` · ${meeting["기타내용"]}`
+                    : ""
+                }
+              </span>
 
-      <div class="row">
-        <span class="label">예비비 적립목표</span>
-        <span class="value">
-          ${money(meeting["예비비 적립목표"])}
-        </span>
-      </div>
+              <span class="value">
+                ${money(meeting["기타비용"])}
+              </span>
+            </div>
+          `
+          : ""
+      }
 
-      <div class="row">
-        <span class="label">정산목표액</span>
+      <div class="divider"></div>
+
+      <div class="row total-row">
+        <span class="label">총 정산액</span>
         <span class="value">
           ${money(meeting["정산목표액"])}
         </span>
@@ -309,19 +403,90 @@
       </div>
 
       <div class="row">
-        <span class="label">실제 입금액</span>
-        <span class="value">
-          ${money(meeting["실제 입금액"])}
-        </span>
-      </div>
-
-      <div class="row">
-        <span class="label">이번 주 예비비 증감</span>
+        <span class="label">이번 회차 예비비</span>
         <span class="value">
           ${signedMoney(meeting["실제 예비비 증감"])}
         </span>
       </div>
     `;
+  }
+
+
+  function participantSection(meeting, id) {
+
+    const participants =
+      Array.isArray(meeting["참가자"])
+        ? meeting["참가자"]
+        : [];
+
+    if (participants.length === 0) {
+      return "";
+    }
+
+    return `
+      <button
+        class="participants-button"
+        onclick="toggleParticipants('${id}', this)"
+      >
+        참가자 보기
+      </button>
+
+      <div
+        class="participants"
+        id="participants-${id}"
+      >
+        <div class="participants-title">
+          참가자
+        </div>
+
+        ${participants.join(" · ")}
+      </div>
+    `;
+  }
+
+
+  function toggleParticipants(id, button) {
+
+    const box =
+      document.getElementById(
+        "participants-" + id
+      );
+
+    const isOpen =
+      box.classList.contains("show");
+
+    if (isOpen) {
+
+      box.classList.remove("show");
+
+      button.textContent =
+        "참가자 보기";
+
+    } else {
+
+      box.classList.add("show");
+
+      button.textContent =
+        "참가자 닫기";
+
+    }
+
+  }
+
+
+  function roundText(meeting) {
+
+    const round = meeting["회차"];
+
+    if (
+      round === "" ||
+      round === null ||
+      round === undefined
+    ) {
+      return "회차 미기록";
+    }
+
+    return `${round}회차`;
   }
 
 
