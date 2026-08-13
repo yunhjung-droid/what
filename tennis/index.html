@@ -636,19 +636,53 @@
       </div>
 
 
-      <div class="row">
+ ${(() => {
 
+  const participants =
+    Array.isArray(meeting["참가자"])
+      ? meeting["참가자"]
+      : [];
+
+  const amounts =
+    participants.map(
+      person => Number(person["입금액"])
+    );
+
+  const allSame =
+    amounts.length > 0 &&
+    amounts.every(
+      amount => amount === amounts[0]
+    );
+
+  if (allSame) {
+
+    return `
+      <div class="row">
         <span class="label">
           1인당 금액
         </span>
 
         <span class="value">
-          ${money(
-            meeting["이론상 1인당"]
-          )}
+          ${money(amounts[0])}
         </span>
-
       </div>
+    `;
+
+  }
+
+  return `
+    <div class="row">
+      <span class="label">
+        정산 금액
+      </span>
+
+      <span class="value">
+        참가자별 상이
+      </span>
+    </div>
+  `;
+
+})()}
 
 
       <div class="row">
