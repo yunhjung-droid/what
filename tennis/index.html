@@ -674,44 +674,104 @@
   // 5. 참가자 보기
   // -----------------------------------------
 
-  function participantSection(meeting, id) {
+ function participantSection(meeting, id) {
 
-    const participants =
-      Array.isArray(meeting["참가자"])
-        ? meeting["참가자"]
-        : [];
+  const participants =
+    Array.isArray(meeting["참가자"])
+      ? meeting["참가자"]
+      : [];
 
+  if (participants.length === 0) {
+    return "";
+  }
 
-    if (participants.length === 0) {
-      return "";
-    }
+  // 참가자들의 입금액만 모음
+  const amounts =
+    participants.map(
+      person => Number(person["입금액"])
+    );
 
+  // 모두 같은 금액인지 확인
+  const allSame =
+    amounts.every(
+      amount => amount === amounts[0]
+    );
 
-    return `
-      <button
-        class="participants-button"
-        onclick="toggleParticipants('${id}', this)"
-      >
-        참가자 보기
-      </button>
+  let participantContent = "";
 
+  if (allSame) {
 
-      <div
-        class="participants"
-        id="participants-${id}"
-      >
-
-        <div class="participants-title">
-          참가자
-        </div>
-
-        ${participants.join(" · ")}
-
+    // 모두 같은 금액이면 이름만 간단하게 표시
+    participantContent = `
+      <div class="participants-title">
+        참가자
       </div>
+
+      ${participants
+        .map(person => person["이름"])
+        .join(" · ")}
+    `;
+
+  } else {
+
+    // 금액이 다르면 이름 + 실제 입금액 표시
+    participantContent = `
+      <div class="participants-title">
+        참가자별 정산
+      </div>
+
+      ${participants
+        .map(person => `
+          <div class="row">
+            <span class="label">
+              ${person["이름"]}
+            </span>
+
+            <span class="value">
+              ${money(person["입금액"])}
+            </span>
+          </div>
+        `)
+        .join("")}
+
+      ${
+        meeting["비고"]
+          ? `
+            <div
+              style="
+                margin-top: 14px;
+                padding-top: 12px;
+                border-top: 1px solid #e8e6e0;
+                color: #777;
+                font-size: 13px;
+                line-height: 1.6;
+              "
+            >
+              ※ ${meeting["비고"]}
+            </div>
+          `
+          : ""
+      }
     `;
 
   }
 
+  return `
+    <button
+      class="participants-button"
+      onclick="toggleParticipants('${id}', this)"
+    >
+      참가자 보기
+    </button>
+
+    <div
+      class="participants"
+      id="participants-${id}"
+    >
+      ${participantContent}
+    </div>
+  `;
+}
 
 
   function toggleParticipants(id, button) {
